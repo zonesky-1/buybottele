@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fitur Web Lengkap</title>
+  <style>
+    body { font-family: sans-serif; background: #111; color: #fff; padding: 20px; }
+    input, button, select, textarea { margin: 10px 0; padding: 10px; width: 100%; }
+    .result { background: #222; padding: 15px; margin-top: 10px; white-space: pre-wrap; }
+    img.preview { max-width: 100%; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<h1>Fitur Web Client-Side</h1>
+
+<!-- ENCODE/DECODE -->
+<h2>🔓 Decode Script to HTML</h2>
+<textarea id="decodeInput" rows="10" placeholder="Tempelkan kode script hasil encode..."></textarea>
+<button onclick="decodeFromScript()">Decode ke HTML</button>
+<textarea id="decodeOutput" rows="10" readonly></textarea>
+
+<h2>🔐 Encode HTML ke Script</h2>
+<textarea id="input" rows="10" placeholder="Tulis kode HTML asli di sini (bisa pakai emoji)."></textarea>
+<button onclick="encodeToScript()">Encode ke Script</button>
+<button onclick="copyOutput()">Salin Hasil</button>
+<textarea id="output" rows="10" readonly></textarea>
+
+<!-- Screenshot Website -->
+<h2>🖼️ Screenshot Website</h2>
+<input type="text" id="ssweb" placeholder="Masukkan URL">
+<button onclick="getScreenshot()">Ambil Screenshot</button>
+<img id="ssPreview" class="preview" src="" />
+
+<!-- Deploy via HTML -->
+<h2>🌐 Deploy HTML ke Vercel</h2>
+<input id="webName" placeholder="Nama Web">
+<textarea id="webContent" placeholder="HTML Web"></textarea>
+<button onclick="createWeb()">🚀 Buat Web</button>
+<button onclick="deleteWeb()">🗑️ Hapus Web</button>
+<button onclick="listWeb()">📋 Lihat Web</button>
+<a id="lastDeployedUrl" href="#" target="_blank" style="display:none">🌍 Lihat Web Terakhir</a>
+<pre id="webList"></pre>
+
+<!-- Deploy via ZIP -->
+<h2>📦 Deploy ZIP ke Vercel</h2>
+<input type="file" id="zipInput" accept=".zip">
+<button onclick="uploadZipDeploy()">🚀 Deploy ZIP</button>
+
+<!-- QR Generator -->
+<h2>🔳 QR Code Generator</h2>
+<input type="text" id="qrtext" placeholder="Teks untuk QR Code">
+<button onclick="generateQR()">Buat QR</button>
+<img id="qrPreview" class="preview" src="" />
+
+<!-- Waifu API -->
+<h2>👧 Waifu Anime</h2>
+<select id="waifuCategory">
+  <option value="waifu">waifu</option>
+  <option value="neko">neko</option>
+  <option value="shinobu">shinobu</option>
+</select>
+<button onclick="getWaifu()">Lihat Anime</button>
+<img id="waifuPreview" class="preview" src="" />
+
+<!-- Anime Kusonime (dummy fungsi, perlu API scrape) -->
+<h2>🎥 Cari Anime (Kusonime)</h2>
+<input type="text" id="animeQuery" placeholder="Masukkan judul anime...">
+<button onclick="searchAnime()">Cari</button>
+<div id="animeResult" class="result"></div>
+
+<!-- Rapi Ai -->
+<h2>🧠 Rapi Ai</h2>
+<textarea id="remixInput" placeholder="Tulis sesuatu..."></textarea>
+<button onclick="remixAI()">Jawab Pih</button>
+<div class="result" id="remixResult"></div>
+
+<!-- IP WHOIS -->
+<h2>🌐 IP Whois Lookup</h2>
+<input type="text" id="ipwhois" placeholder="Masukkan alamat IP">
+<button onclick="getIPWhois()">Cek IP</button>
+<div class="result" id="ipResult"></div>
+
+<!-- JS Library -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+<script>
+const vercelToken = "MSI4ndF3GFHpB5zjC41XrTfH"; // Ganti token jika perlu
+
+function encodeToScript() {
+  const input = document.getElementById("input").value;
+  if (!input) return alert("Isi HTML dulu!");
+  const encoded = encodeURIComponent(input).replace(/"/g, '\\"');
+  document.getElementById("output").value = `<script>document.write(decodeURIComponent("${encoded}"))<\/script>`;
+}
+
+function decodeFromScript() {
+  const script = document.getElementById("decodeInput").value;
+  const match = script.match(/decodeURIComponent\(["'](.+?)["']\)/);
+  if (!match) return alert("❌ Kode tidak valid.");
+  try {
+    const decoded = decodeURIComponent(match[1].replace(/\\"/g, '"'));
+    document.getElementById("decodeOutput").value = decoded;
+  } catch (e) {
+    alert("❌ Error: " + e.message);
+  }
+}
+
+function copyOutput() {
+  const output = document.getElementById("output");
+  output.select(); document.execCommand("copy");
+  alert("✅ Disalin!");
+}
+
+function getScreenshot() {
+  const url = document.getElementById('ssweb').value;
+  const api = `https://api.siputzx.my.id/api/tools/ssweb?url=${encodeURIComponent(url)}&theme=light&device=desktop`;
+  document.getElementById('ssPreview').src = api;
+}
+
+function generateQR() {
+  const text = document.getElementById('qrtext').value;
+  document.getElementById('qrPreview').src = `https://api.siputzx.my.id/api/tools/text2qr?text=${encodeURIComponent(text)}`;
+}
+
+async function getWaifu() {
+  const category = document.getElementById('waifuCategory').value;
+  try {
+    const res = await fetchJson(`https://api.waifu.pics/nsfw/${category}`);
+    document.getElementById('waifuPreview').src = res.url;
+  } catch {
+    alert("❌ Gagal ambil waifu.");
+  }
+}
+
+async function remixAI() {
+  const prompt = `Ubah gaya bicaramu agar lebih karakteristik, terbuka, modern, gaul dan keren...`;
+  const content = document.getElementById('remixInput').value;
+  const url = `https://api.siputzx.my.id/api/ai/gpt3?prompt=${encodeURIComponent(prompt)}&content=${encodeURIComponent(content)}`;
+  try {
+    const res = await fetchJson(url);
+    document.getElementById('remixResult').innerText = res.result || res.data || "(no reply)";
+  } catch {
+    document.getElementById('remixResult').innerText = "❌ Gagal.";
+  }
+}
+
+async function getIPWhois() {
+  const ip = document.getElementById('ipwhois').value.trim();
+  try {
+    const res = await fetchJson(`https://ipwho.is/${ip}`);
+    if (!res.success) throw new Error();
+    document.getElementById('ipResult').innerText =
+      `📍 IP: ${res.ip}\n🌍 Negara: ${res.country}\n🏙️ Kota: ${res.city}\n📡 ISP: ${res.connection?.isp}\n🕒 Zona: ${res.timezone?.id}`;
+  } catch {
+    document.getElementById('ipResult').innerText = "❌ Gagal ambil data.";
+  }
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Fetch error");
+  return res.json();
+}
+
+async function createWeb() {
+  const name = document.getElementById("webName").value.trim();
+  const html = document.getElementById("webContent").value.trim();
+  if (!name || !html) return alert("⚠️ Isi nama dan HTML!");
+
+  try {
+    const res = await fetch("https://api.vercel.com/v13/deployments", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + vercelToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name,
+        files: [{ file: "index.html", data: html }],
+        projectSettings: { framework: null }
+      })
+    });
+    const json = await res.json();
+    if (!res.ok || !json.url) return alert("❌ Gagal: " + (json.error?.message || "Unknown"));
+    const url = "https://" + json.url;
+    alert("✅ Sukses: " + url);
+    document.getElementById("lastDeployedUrl").href = url;
+    document.getElementById("lastDeployedUrl").style.display = "inline-block";
+    listWeb();
+  } catch (e) {
+    alert("❌ Gagal deploy.");
+  }
+}
+
+async function deleteWeb() {
+  const name = document.getElementById("webName").value.trim();
+  const res = await fetch("https://api.vercel.com/v6/deployments?limit=100", {
+    headers: { Authorization: "Bearer " + vercelToken }
+  });
+  const json = await res.json();
+  const found = json.deployments.find(d => d.name === name || d.uid === name);
+  if (!found) return alert("❌ Tidak ditemukan.");
+  await fetch(`https://api.vercel.com/v13/deployments/${found.uid}`, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + vercelToken }
+  });
+  alert(`✅ ${found.name} dihapus.`);
+  listWeb();
+}
+
+async function listWeb() {
+  const res = await fetch("https://api.vercel.com/v6/deployments?limit=100", {
+    headers: { Authorization: "Bearer " + vercelToken }
+  });
+  const json = await res.json();
+  const map = new Map();
+  json.deployments.forEach(d => { if (!map.has(d.name)) map.set(d.name, d); });
+  const list = Array.from(map.values())
+    .map((d, i) => `${i + 1}. https://${d.name}.vercel.app (ID: ${d.uid})`)
+    .join("\n");
+  document.getElementById("webList").innerText = list || "(Belum ada)";
+}
+
+async function uploadZipDeploy() {
+  const fileInput = document.getElementById("zipInput");
+  const file = fileInput.files[0];
+  if (!file) return alert("⚠️ Pilih ZIP!");
+  const zip = await JSZip.loadAsync(file);
+  const files = [];
+  for (const [path, fileData] of Object.entries(zip.files)) {
+    if (fileData.dir) continue;
+    const content = await fileData.async("string");
+    files.push({ file: path, data: content });
+  }
+
+  const name = prompt("📝 Nama project Vercel:");
+  if (!name) return;
+
+  try {
+    const res = await fetch("https://api.vercel.com/v13/deployments", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + vercelToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name,
+        files,
+        projectSettings: { framework: null }
+      })
+    });
+    const json = await res.json();
+    if (!res.ok || !json.url) throw new Error(json.error?.message || "Gagal upload");
+    const url = "https://" + json.url;
+    alert("✅ Sukses Deploy ZIP: " + url);
+    document.getElementById("lastDeployedUrl").href = url;
+    document.getElementById("lastDeployedUrl").style.display = "inline-block";
+    listWeb();
+  } catch (e) {
+    alert("❌ Gagal: " + e.message);
+  }
+}
+</script>
+</body>
+</html>
