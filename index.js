@@ -1,19 +1,15 @@
 require("dotenv").config();
-const { Telegraf, session } = require("telegraf");
+const { Telegraf } = require("telegraf");
+const { session } = require("@telegraf/session"); // ✅ fix disini
+
 const {
-  handleBuy,
-  handleProductSelected,
-  handleWaitUpload,
-  handlePaymentProof,
-  handleApprove,
-  handleReject,
-  handleDeploy,
-  handleStatus,
-  handleHistory
+  handleBuy, handleProductSelected, handleWaitUpload,
+  handlePaymentProof, handleApprove, handleReject,
+  handleDeploy, handleStatus, handleHistory
 } = require("./handlers/buyHandler");
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
-bot.use(session());
+bot.use(session()); // ✅ sekarang tidak error
 
 bot.command("buy", handleBuy);
 bot.command("status", handleStatus);
